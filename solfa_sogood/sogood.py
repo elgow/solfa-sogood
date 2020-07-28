@@ -1,6 +1,10 @@
 from pathlib import Path
 from miditoolkit.midi import parser as mid_parser
-from numpy import array
+from miditoolkit.pianoroll import parser as pp_parser
+from miditoolkit import utils as mt_utils
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import defopt
 
 CHROMATIC_SCALE = ('C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B')
@@ -70,9 +74,9 @@ def _best_ewi_key(notes: {int}):
     scores = {}
     for pitch in range(min(pitches), list(pitches)[len(pitches)//2]):
         ewi_scale = set(ewi_range(pitch))
-        score = ((10.0 * len(ewi_scale & pitchset)
+        score = ((3.0 * len(ewi_scale & pitchset)
                  + len([n for n in pitchset if min(ewi_scale) <= n <= max(ewi_scale)])) / len(pitchset)
-                 + 10.0 * len([x for x in pitches if x in ewi_scale]) / len(pitches))
+                 + 3.0 * len([x for x in pitches if x in ewi_scale]) / len(pitches))
         scores[score] = pitch
     return scores[max(scores.keys())]
 
@@ -88,7 +92,26 @@ def midi_to_solfa(midi_pitch, root_pitch):
     return (f'{"<" * -octave} {note} {">" * octave}')
 
 
-def main(midi_file, track_name='MELODY'):
+def get_notes(midi_file, track_name='MELODY'):
+    """
+    Get notes from MIDI file
+
+    :param str midi_file: path to MIDI file as string or Path
+    :param str track_name: name of track to use
+    :return: notes list
+    """
+    midi_path = Path(midi_file)
+    midi_song = mid_parser.MidiFile(str(midi_path))
+    if len(midi_song.instruments) == 1:
+        track_index = 0
+    else:
+        track_map = {name: num for num, name in enumerate([t.name for t in midi_song.instruments])}
+        track_index = track_map.get(track_name)
+    notes = midi_song.instruments[track_index].notes
+    return notes
+
+
+def best_key(midi_file, track_name='MELODY'):
     """
     Choose best key to play a MIDI song on the EWI
 
@@ -96,19 +119,61 @@ def main(midi_file, track_name='MELODY'):
     :param str track_name: name of track to use
     :return: note string for tonic of key
     """
-    midi_path = Path(midi_file)
-    midi_song = mid_parser.MidiFile(midi_file)
-    if len(midi_song.instruments) == 1:
-        track_index = 0
-    else:
-        track_map = {name: num for num, name in enumerate([t.name for t in midi_song.instruments])}
-        track_index = track_map.get(track_name)
-    notes = midi_song.instruments[track_index].notes
-    best = _best_ewi_key(notes)
-    stats = [len(x) for x in ((ewi_range(best) & set([x.pitch for x in notes])), set([x.pitch for x in notes]) - ewi_range(best))]
+    best = _best_ewi_key(get_notes(midi_file, track_name))
+    return midi_2_note(best)
 
-    print(midi_2_note(best), stats)
+cmap = ListedColormap(['#f2f2f2',  # light gray diatonic note row background
+                       '#e6e6e6',  # gray chromatic accidentals row background
+                       '#c40233',  # Do red
+                       '#fd4e7a',  # di pastel red
+                       '#e16b1a',  # Re orange
+                       '#efa676',  # ri pastel orange
+                       '#eac100',  # Mi yellow
+                       '#00a368',  # Fa green
+                       '#00e691',  # fi pastel green
+                       '#00b2b0',  # So aqua
+                       '#00e6e2',  # si pastel aqua
+                       '#0088bf',  # La blue
+                       '#80dbff',  # pastel blue
+                       '#624579']) # Ti purple
+
+def show_score(midi_file, track_name='MELODY', key=None):
+    """
+    Display MIDI track as pianoroll with solfa notes
+
+    :param str midi_file: path to MIDI file as string or Path
+    :param str track_name: name of track to use
+    :param str key: name of key to use. Automatically determined if not specified.
+    """
+    notes = get_notes(midi_file, track_name)
+    best = note_2_midi(key) if key else _best_ewi_key(notes)
+
+    pitches = [x.pitch for x in notes]
+    low = min(pitches)
+    high = max(pitches)
+
+    proll = pp_parser.notes2pianoroll(notes, to_sparse=False).T
+
+    for i in range(low, high):
+        def f(x):
+            return i % 2 if x == 0 else ((i - best) % 12) + 2
+        proll[i] = np.array([f(xi) for xi in proll[i]])
+    proll = proll[low - 2:high + 2, :]
+
+    fig, ax = plt.subplots()  # Create a figure containing a single axes.
+    ax.set_yticks(np.arange(low - 2, high + 2))
+    ax.imshow(proll[:, 9000:20000],
+            cmap=cmap,
+            aspect="auto",
+            origin="lower",
+            interpolation="none")
+
+    # ax.plot(proll)  # Plot some data on the axes.
+    fig.show()
+
+    chroma = mt_utils.tochroma(proll)
+    pass
 
 
 if __name__ == '__main__':
-    defopt.run(main)
+    print(defopt.run([best_key, show_score]))
