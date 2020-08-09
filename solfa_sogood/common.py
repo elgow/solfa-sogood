@@ -28,7 +28,7 @@ solfa = OrderedDict((('Do', '#c40233'),   # red
                      ('Ti', '#624579')))  # purple
 solfa_list = list(solfa.items())
 
-key_color = [x == x.lower() for x in solfa.keys()]
+black_key = [x == x.lower() for x in solfa.keys()]
 
 # color coded solfa mostly per https://en.wikipedia.org/wiki/File:Solresol_representations.svg
 bg_colors = ['#f2f2f2',  # light gray diatonic note row background
