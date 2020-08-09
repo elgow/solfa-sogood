@@ -1,25 +1,24 @@
 from pathlib import Path
-from itertools import zip_longest
-from collections import OrderedDict
-from miditoolkit.midi import parser as mid_parser
 from miditoolkit.pianoroll import parser as pp_parser
 from miditoolkit import utils as mt_utils
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
-from matplotlib import ticker
-import matplotlib.patches as mpatches
-from matplotlib.text import Text
 import defopt
 from math import ceil
+from io import BytesIO
+
+import pygal
+from lxml import etree
+from lxml.html import open_in_browser
+
 
 try:
     from common import *
 except:
     from .common import *
 
+DOT_SIZE = 10
 
-cmap = ListedColormap(list(solfa.values()) + bg_colors)
+cmap =list(solfa.values()) + bg_colors
 
 def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
     """
@@ -32,9 +31,6 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
     :param int end: number of last measure to display
 
     """
-    plt.switch_backend('pdf')
-    print(plt.get_backend())
-
 
     midi, notes = get_notes(midi_file, track_name)
     best = note_2_midi(key) if key else best_ewi_key(notes)
@@ -51,13 +47,13 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
     low = min(pitches) - 2
     high = max(pitches) + 2
 
-    vol_proll = pp_parser.notes2pianoroll(notes, to_sparse=False).T[low:high, :]
+    vol_proll = pp_parser.notes2pianoroll(notes, to_sparse=False).T
 
     # background color indicators, 12 = white keys, 13 = black keys
     bg = np.array([(13 if key_color[(x + low - best) % 12] else 12) for x in range(vol_proll.shape[0])])
     fg = np.array([(x + low - best) % 12 for x in range(vol_proll.shape[0])])
 
-    proll = np.where(np.where(vol_proll > 0, True, False), fg[:, None], bg[:, None])
+    proll = np.where(vol_proll > 0, DOT_SIZE, 0)
 
     # for i in range(proll.shape[0]):
     #     def f(x):
@@ -66,60 +62,31 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
     # proll = proll[low - 2:high + 2, :]
 
     num_staffs = ceil((play_stop - play_start) / (ticks_per_measure * MEASURES_PER_STAFF))
-    fig, axs = plt.subplots(nrows=num_staffs, figsize=(MEASURES_PER_STAFF, 1.5 * num_staffs), dpi=300)
 
-    axs[0].set_title('{} (Do = {}-{})'.format(Path(midi_file).name, *midi_2_note(best)))
+    # set_title('{} (Do = {}-{})'.format(Path(midi_file).name, *midi_2_note(best)))
 
-    y_repeat = 1
+    root = etree.Element('root')
+    staff_ticks = MEASURES_PER_STAFF * ticks_per_measure
 
-    # ax.set_ylim([low, high])
-    # ax.set_ylim([y_repeat * (low), y_repeat * (high)])
+    for staff_num in range(num_staffs):
+        chart = pygal.Dot(height=(high - low) * 12)
 
-    for idx, ax in enumerate(axs):
-        #ax.set_yticks(range(low, high))
-        #ax.yaxis.set_major_locator()
-        #yticks = plt.yticks()
-        #tick_dic = dict(zip_longest(list(yticks[0]), yticks[1]))
+        for note in range(high, low, -1):
+            staff_start = play_start + staff_num * staff_ticks
+            points = proll[note, staff_start : staff_start + staff_ticks]
 
-        # for p, l in tick_dic.items():
-        #     text, color = list(solfa.items())[int((p - best) % 12)]
-        #     l.set_color(color)
+            chart.add(midi_to_solfa(note, best), points)
+
+        root.append(chart.render_tree())
+
 
         def y_tick_label(i, pos):
             return midi_to_solfa(i + low, best)
 
-        ax.yaxis.set_major_formatter(ticker.FuncFormatter(y_tick_label))
-        ax.set_yticks([i for i in range(proll.shape[0]) if fg[i] == 12])
-        ax.set_yticks([i for i in range(proll.shape[0]) if fg[i] == 13], minor=True)
-
         def x_tick_label(i, pos):
             return int((i - start_tick) / ticks_per_measure)
 
-        ax.xaxis.set_minor_locator(ticker.IndexLocator(base=midi.ticks_per_beat, offset=0))
-        ax.xaxis.set_major_locator(ticker.IndexLocator(base=ticks_per_measure, offset=0))
-        ax.xaxis.set_major_formatter(ticker.FuncFormatter(x_tick_label))
-        ax_start = play_start + idx * MEASURES_PER_STAFF * ticks_per_measure
-        ax.set_xlim([ax_start, ax_start + MEASURES_PER_STAFF * ticks_per_measure])
-        ax.xaxis.grid(linestyle='-', linewidth=2, which='major')
-        ax.xaxis.grid(color='#e6e6e6', linestyle=':', linewidth=1, which='minor')
-
-
-
-        #tonic = mpatches.Patch(color=solfa['Do'], label='Do = {}-{}'.format(*midi_2_note(best)))
-        #plt.legend(handles=[tonic])
-
-        ax.imshow(np.repeat(proll[:, :], y_repeat, axis=0),
-                cmap=cmap,
-                aspect="auto",
-                origin="lower",
-                interpolation="none")
-
-    #fig.show()
-    #plt.ion()
-    #plt.show()
-    from matplotlib.backends.backend_pdf import PdfPages
-    with PdfPages('/Volumes/Users/Home/Ed/test.pdf') as export_pdf:
-        export_pdf.savefig(dpi=300)
+    open_in_browser(root)
 
 if __name__ == '__main__':
     print(defopt.run([best_key, show_score]))
