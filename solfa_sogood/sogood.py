@@ -87,9 +87,7 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
         return int((i - start_tick) / ticks_per_measure)
 
     layout = column(*figs)
-    # set_title('{} (Do = {}-{})'.format(Path(midi_file).name, *midi_2_note(best)))
-
-    output_file('/tmp/sogood.html')
+    output_file('/tmp/sogood.html', title='{} (Do = {}-{})'.format(Path(midi_file).name, *midi_2_note(best)))
     show(layout)
 
 if __name__ == '__main__':

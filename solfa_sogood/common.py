@@ -14,18 +14,32 @@ MAJOR_RANGE = (0, 2, 4, 5, 7, 9, 11)   # Offsets from tonic for major scale, wra
 EWI_RANGE = (-2, -1) + MAJOR_RANGE + (10, 12, 14, 15)  # range of notes EWI can play w/o octave shift. Bb is easy
 
 # solfa scale note names
-solfa = OrderedDict((('Do', '#c40233'),   # red
-                     ('di', '#fd4e7a'),   # pastel red
-                     ('Re', '#e16b1a'),   # orange
-                     ('ri', '#efa676'),   # pastel orange
-                     ('Mi', '#eac100'),   # yellow
-                     ('Fa', '#00a368'),   # green
-                     ('fi', '#00e691'),   # pastel green
-                     ('So', '#00e6e2'),   # aqua
-                     ('si', '#4dfffc'),   # pastel aqua
-                     ('La', '#0088bf'),   # blue
-                     ('li', '#80dbff'),   # pastel blue
-                     ('Ti', '#624579')))  # purple
+# solfa = OrderedDict((('Do', '#c40233'),   # red
+#                      ('di', '#fd4e7a'),   # pastel red
+#                      ('Re', '#e16b1a'),   # orange
+#                      ('ri', '#efa676'),   # pastel orange
+#                      ('Mi', '#eac100'),   # yellow
+#                      ('Fa', '#00a368'),   # green
+#                      ('fi', '#00e691'),   # pastel green
+#                      ('So', '#00e6e2'),   # aqua
+#                      ('si', '#4dfffc'),   # pastel aqua
+#                      ('La', '#0088bf'),   # blue
+#                      ('li', '#80dbff'),   # pastel blue
+#                      ('Ti', '#624579')))  # purple
+
+solfa = OrderedDict((('Do', '#e31a1c'),   # red
+                     ('di', '#fb9a99'),   # pastel red
+                     ('Re', '#ff7f00'),   # orange
+                     ('ri', '#fdbf6f'),   # pastel orange
+                     ('Mi', '#F0E442'),   # yellow
+                     ('Fa', '#2ca02c'),   # green
+                     ('fi', '#bcbd22'),   # pastel green
+                     ('So', '#66c2a4'),   # aqua
+                     ('si', '#99d8c9'),   # pastel aqua
+                     ('La', '#1f78b4'),   # blue
+                     ('li', '#a6cee3'),   # pastel blue
+                     ('Ti', '#6a3d9a')))  # purple
+
 solfa_list = list(solfa.items())
 
 black_key = [x == x.lower() for x in solfa.keys()]
