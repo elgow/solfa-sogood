@@ -28,6 +28,8 @@ solfa = OrderedDict((('Do', '#c40233'),   # red
                      ('Ti', '#624579')))  # purple
 solfa_list = list(solfa.items())
 
+key_color = [x == x.lower() for x in solfa.keys()]
+
 # color coded solfa mostly per https://en.wikipedia.org/wiki/File:Solresol_representations.svg
 bg_colors = ['#f2f2f2',  # light gray diatonic note row background
              '#e6e6e6']  # gray chromatic accidentals row background
@@ -100,7 +102,7 @@ def midi_to_solfa(midi_pitch, root_pitch):
     :param int root_pitch: root pitch
     :return: solfa note name
     """
-    note = solfa_list[(midi_pitch - root_pitch) % 12][0]
+    note = solfa_list[int((midi_pitch - root_pitch) % 12)][0]
     octave = round(((midi_pitch - root_pitch) - 5.9) / 12)
     return (f'{"<" * -octave} {note} {">" * octave}')
 
@@ -109,9 +111,9 @@ def get_notes(midi_file, track_name='MELODY'):
     """
     Get notes from MIDI file
 
-    :param str midi_file: path to MIDI file as string or Path
+    :param str midi: path to MIDI file as string or Path
     :param str track_name: name of track to use
-    :return: notes list
+    :return: midi object, notes list
     """
     midi_path = Path(midi_file)
     midi_song = mid_parser.MidiFile(str(midi_path))
@@ -121,7 +123,7 @@ def get_notes(midi_file, track_name='MELODY'):
         track_map = {name: num for num, name in enumerate([t.name for t in midi_song.instruments])}
         track_index = track_map.get(track_name)
     notes = midi_song.instruments[track_index].notes
-    return notes
+    return midi_song, notes
 
 
 def best_key(midi_file, track_name='MELODY'):
@@ -132,6 +134,6 @@ def best_key(midi_file, track_name='MELODY'):
     :param str track_name: name of track to use
     :return: note string for tonic of key
     """
-    best = best_ewi_key(get_notes(midi_file, track_name))
+    best = best_ewi_key(get_notes(midi_file, track_name)[1])
     return midi_2_note(best)
 
