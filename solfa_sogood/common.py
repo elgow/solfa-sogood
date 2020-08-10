@@ -34,7 +34,7 @@ solfa = OrderedDict((('Do', '#e31a1c'),   # red
                      ('Mi', '#F0E442'),   # yellow
                      ('Fa', '#2ca02c'),   # green
                      ('fi', '#bcbd22'),   # pastel green
-                     ('So', '#66c2a4'),   # aqua
+                     ('So', '#35978f'),   # aqua
                      ('si', '#99d8c9'),   # pastel aqua
                      ('La', '#1f78b4'),   # blue
                      ('li', '#a6cee3'),   # pastel blue
