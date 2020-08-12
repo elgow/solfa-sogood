@@ -1,5 +1,4 @@
 from pathlib import Path
-from itertools import repeat
 import defopt
 from math import ceil
 
@@ -78,9 +77,10 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
         f = figure(y_range=y_labels, tools=[])
         f.grid.visible = False
         f.yaxis.axis_label_text_baseline = 'top'
-        f.plot_height = (high - low) * 14
+        f.plot_height = (high - low) * 12
         f.plot_width = measures_per_staff * 200
         tick_labels = {}
+        
         for pitch in range(low + 1, high + 1):
             if black_key[(pitch - best) % 12]:
                 f.line([staff_start, staff_end], [pitch - low, pitch - low], line_width=10,
