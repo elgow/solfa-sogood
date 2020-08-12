@@ -42,7 +42,7 @@ solfa = OrderedDict((('Do', '#e31a1c'),   # red
 
 solfa_list = list(solfa.items())
 
-black_key = [x == x.lower() for x in solfa.keys()]
+black_key = [(1 if x == x.lower() else 0) for x in solfa.keys()]
 
 # color coded solfa mostly per https://en.wikipedia.org/wiki/File:Solresol_representations.svg
 bg_colors = ['#f2f2f2',  # light gray diatonic note row background

@@ -1,18 +1,14 @@
 from pathlib import Path
-from miditoolkit.pianoroll import parser as pp_parser
-from miditoolkit import utils as mt_utils
-import numpy as np
+from itertools import repeat
 import defopt
 from math import ceil
-from io import BytesIO
-
 
 from bokeh.layouts import column
 from bokeh.plotting import figure, show
 from bokeh.colors import Color, RGB
 from bokeh.io.output import output_file
 from bokeh.models.mappers import LinearColorMapper
-
+from bokeh.models import FuncTickFormatter, FixedTicker
 
 try:
     from common import *
@@ -41,62 +37,85 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
 
 
 
-    pitches = [x.pitch for x in notes]
-    low = min(pitches) - 2
-    high = max(pitches) + 2
+    pitches = {int((x.start + x.end) / 2): x.pitch for x in notes}
+    low = min(pitches.values()) - 2
+    high = max(pitches.values()) + 2
 
-    midi.ticks_per_beat
 
-    raw_ticks_per_measure = midi.ticks_per_beat * midi.time_signature_changes[0].numerator
-    start_tick = int(notes[0].start / raw_ticks_per_measure) * raw_ticks_per_measure
-    stop_tick = ceil(notes[-1].end / raw_ticks_per_measure) * raw_ticks_per_measure
+    ticks_per_measure = midi.ticks_per_beat * midi.time_signature_changes[0].numerator
+    start_tick = int(notes[0].start / ticks_per_measure) * ticks_per_measure
+    stop_tick = ceil(notes[-1].end / ticks_per_measure) * ticks_per_measure
 
-    downsample = int(midi.ticks_per_beat / 64)
 
-    vol_proll = pp_parser.notes2pianoroll(notes, to_sparse=False).T[low:high, start_tick: stop_tick: downsample]
-
-    ticks_per_measure = int(raw_ticks_per_measure / downsample)
-
-    measures_per_staff = min(12, ceil((vol_proll.shape[1]) / ticks_per_measure / 4))
+    measures_per_staff = min(8, ceil((stop_tick - start_tick) / ticks_per_measure / 4))
 
     # background color indicators, 12 = white keys, 13 = black keys
-    bg = np.array([(13 if black_key[(x + low - best) % 12] else 12) for x in range(vol_proll.shape[0])])
-    fg = np.array([[(x + low - best) % 12] for x in range(vol_proll.shape[0])])
+    # bg = np.array([(13 if black_key[(x + low - best) % 12] else 12) for x in range(vol_proll.shape[0])])
+    # fg = np.array([[(x + low - best) % 12] for x in range(vol_proll.shape[0])])
 
     # init array with black and white key bg vals
-    proll = np.zeros(vol_proll.shape)
-    for r in range(vol_proll.shape[0]):
-        proll[r] = np.where(vol_proll[r] > 0, fg[r], 13 if black_key[(r + low - best) % 12] else 12)
+    # proll = np.zeros(vol_proll.shape)
+    # for r in range(vol_proll.shape[0]):
+    #     proll[r] = np.where(vol_proll[r] > 0, fg[r], 13 if black_key[(r + low - best) % 12] else 12)
 
     # set up staffs
-    play_start = start * ticks_per_measure
-    play_stop = end * ticks_per_measure if end else proll.shape[1]
+    play_start = start_tick + start * ticks_per_measure
+    play_stop = end * ticks_per_measure if end else stop_tick
     num_staffs = ceil((play_stop - play_start) / (ticks_per_measure * measures_per_staff))
 
-    y_labels = [midi_to_solfa(x, best) for x in range(low, high)]
+    y_labels = ['{}-{}'.format(*midi_2_note(x + 1)) for x in range(low, high)]
 
     staff_ticks = measures_per_staff * ticks_per_measure
 
-    figs = []
 
-    #['#7f3b08'] +
     lcm = LinearColorMapper(list(solfa.values()) + bg_colors, low=0, high=13)
 
+    nan = float('nan')
+    figs = []
     for staff_num in range(num_staffs):
         staff_start = play_start + staff_ticks * staff_num
+        staff_end = staff_start + staff_ticks
         f = figure(y_range=y_labels, tools=[])
+        f.grid.visible = False
+        f.yaxis.axis_label_text_baseline = 'top'
         f.plot_height = (high - low) * 14
-        f.plot_width = measures_per_staff * 180
-        f.image(image=[proll[:, staff_start : staff_start + staff_ticks]],
-                x=0, y=0, dw=staff_ticks, dh=high - low, color_mapper=lcm)
+        f.plot_width = measures_per_staff * 200
+        tick_labels = {}
+        for pitch in range(low + 1, high + 1):
+            if black_key[(pitch - best) % 12]:
+                f.line([staff_start, staff_end], [pitch - low, pitch - low], line_width=10,
+                       alpha=0.5, level='underlay', color=bg_colors[1])
+        for tick in range(0, ticks_per_measure * measures_per_staff + 1, midi.ticks_per_beat):
+            pos = staff_start + tick
+            f.line([pos, pos], [0, high - low], level='underlay',
+                   color='gray', line_width=1, alpha=(0.4 if pos % ticks_per_measure else 0.8))
+
+        for note in notes:
+            if staff_start <= note.end and note.start <= staff_end:
+                tick_labels[int((note.start + note.end) / 2)] = midi_to_solfa(note.pitch, best)
+                f.line([max(note.start, staff_start), min(note.end, staff_end)],
+                       [note.pitch - low, note.pitch - low],
+                       line_width=10, color=list(solfa.values())[(note.pitch - best) % 12], alpha=1.0)
+
+        tick_formatter = FuncTickFormatter(code="""
+            var labels = %s;
+            return labels[tick];
+        """ % tick_labels)
+        f.xaxis.ticker = list(tick_labels.keys())
+        f.xaxis.formatter = tick_formatter
         figs.append(f)
 
 
-    def x_tick_label(i, pos):
-        return int((i - start_tick) / raw_ticks_per_measure)
 
+    # set title and render
+    title_text = '{} (Do = {}-{})'.format(Path(midi_file).name, *midi_2_note(best))
+    title = figs[0].title
+    title.text = title_text
+    title.align = "center"
+    title.text_color = "gray"
+    title.text_font_size = "20px"
     layout = column(*figs)
-    output_file('/tmp/sogood.html', title='{} (Do = {}-{})'.format(Path(midi_file).name, *midi_2_note(best)))
+    output_file('/tmp/sogood.html', title=title_text)
     show(layout)
 
 if __name__ == '__main__':
