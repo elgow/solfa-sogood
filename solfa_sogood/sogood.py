@@ -6,8 +6,7 @@ from bokeh.layouts import column
 from bokeh.plotting import figure, show
 from bokeh.colors import Color, RGB
 from bokeh.io.output import output_file
-from bokeh.models.mappers import LinearColorMapper
-from bokeh.models import FuncTickFormatter, FixedTicker
+from bokeh.models import FuncTickFormatter, FixedTicker, ColorBar, LinearColorMapper, Row
 
 try:
     from common import *
@@ -66,9 +65,6 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
 
     staff_ticks = measures_per_staff * ticks_per_measure
 
-
-    lcm = LinearColorMapper(list(solfa.values()) + bg_colors, low=0, high=13)
-
     nan = float('nan')
     figs = []
     for staff_num in range(num_staffs):
@@ -114,6 +110,19 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
     title.align = "center"
     title.text_color = "gray"
     title.text_font_size = "20px"
+
+    # add colorbar legend for note colors
+    color_mapper = LinearColorMapper(palette=list(solfa.values()), low=0, high=len(solfa) - 1)
+    color_tick_formatter = FuncTickFormatter(code="""
+            var labels = %s;
+            return labels[tick];
+        """ % list(solfa.keys()))
+
+    color_bar = ColorBar(color_mapper=color_mapper, ticker=FixedTicker(ticks=list(range(len(solfa)))),
+                         formatter=color_tick_formatter, border_line_color=None, location=(0, 0))
+
+    figs[0].add_layout(color_bar, 'right')
+
     layout = column(*figs)
     output_file('/tmp/sogood.html', title=title_text)
     show(layout)
