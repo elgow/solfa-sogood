@@ -131,12 +131,17 @@ def get_notes(midi_file, track_name='MELODY'):
     """
     midi_path = Path(midi_file)
     midi_song = mid_parser.MidiFile(str(midi_path))
+    track_index = None
     if len(midi_song.instruments) == 1:
         track_index = 0
     else:
-        track_map = {name: num for num, name in enumerate([t.name for t in midi_song.instruments])}
-        track_index = track_map.get(track_name)
+        track_map = {str(name).strip().upper(): num for num, name in enumerate([t.name for t in midi_song.instruments])}
+        track_index = track_map.get(str(track_name).strip().upper())
+    if track_index is None:
+        raise ValueError(f'No track {track_name} found in tracks {track_map}')
     notes = midi_song.instruments[track_index].notes
+    if not notes:
+        raise ValueError(f'No notes in track {midi_song.instruments[track_index]}')
     return midi_song, notes
 
 
