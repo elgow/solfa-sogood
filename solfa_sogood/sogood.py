@@ -13,7 +13,6 @@ try:
 except:
     from .common import *
 
-DOT_SIZE = 10
 
 cmap =list(solfa.values()) + bg_colors
 
@@ -33,7 +32,7 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None, dir=
 
     midi, notes = get_notes(midi_file, track_name)
     best = note_2_midi(key) if key else best_ewi_key(notes)
-
+    end_mark = ceil(midi.ticks_per_beat / 128)  # cut note line short by some ticks at both ends to show breaks better
 
 
 
@@ -69,6 +68,7 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None, dir=
 
     nan = float('nan')
     figs = []
+
     for staff_num in range(num_staffs):
         staff_start = play_start + staff_ticks * staff_num
         staff_end = staff_start + staff_ticks
@@ -91,7 +91,7 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None, dir=
         for note in notes:
             if staff_start <= note.end and note.start <= staff_end:
                 tick_labels[int((note.start + note.end) / 2)] = midi_to_solfa(note.pitch, best)
-                f.line([max(note.start, staff_start), min(note.end, staff_end)],
+                f.line([max(note.start + end_mark, staff_start), min(note.end - end_mark, staff_end)],
                        [note.pitch - low, note.pitch - low],
                        line_width=10, color=list(solfa.values())[(note.pitch - best) % 12], alpha=1.0)
 
@@ -103,15 +103,14 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None, dir=
         f.xaxis.formatter = tick_formatter
         figs.append(f)
 
-
-
     # set title and render
-    title_text = '{} (Do = {}-{})'.format(Path(midi_file).name, *midi_2_note(best))
+    title_text = '{} (Do = {}-{})'.format(Path(output_file or midi_file).name, *midi_2_note(best))
     title = figs[0].title
     title.text = title_text
     title.align = "center"
     title.text_color = "gray"
     title.text_font_size = "20px"
+    figs[0].plot_height = figs[0].plot_height + 32  # allow for title
 
     # add colorbar legend for note colors
     color_mapper = LinearColorMapper(palette=list(solfa.values()), low=0, high=len(solfa) - 1)
