@@ -32,12 +32,12 @@ solfa = OrderedDict((('Do', '#e31a1c'),   # red
                      ('Re', '#ff7f00'),   # orange
                      ('ri', '#fdbf6f'),   # pastel orange
                      ('Mi', '#F0E442'),   # yellow
-                     ('Fa', '#2ca02c'),   # green
-                     ('fi', '#bcbd22'),   # pastel green
-                     ('So', '#35978f'),   # aqua
-                     ('si', '#99d8c9'),   # pastel aqua
-                     ('La', '#1f78b4'),   # blue
-                     ('li', '#a6cee3'),   # pastel blue
+                     ('Fa', '#4dac26'),   # green
+                     ('fi', '#b5cf6b'),   # pastel green
+                     ('So', '#5ab4ac'),   # aqua
+                     ('si', '#c7eae5'),   # pastel aqua
+                     ('La', '#6baed6'),   # blue
+                     ('li', '#bfd3e6'),   # pastel blue
                      ('Ti', '#6a3d9a')))  # purple
 
 solfa_list = list(solfa.items())
@@ -101,7 +101,7 @@ def best_ewi_key(notes: {int}):
     pitches = [x.pitch for x in notes]
     pitchset = set(pitches)
     scores = {}
-    for pitch in range(min(pitches), list(pitches)[len(pitches)//2]):
+    for pitch in range(min(pitches), sorted(list(pitches))[len(pitches)//2]):
         ewi_scale = set(ewi_range(pitch))
         score = ((3.0 * len(ewi_scale & pitchset)
                  + len([n for n in pitchset if min(ewi_scale) <= n <= max(ewi_scale)])) / len(pitchset)

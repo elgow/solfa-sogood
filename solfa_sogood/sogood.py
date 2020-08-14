@@ -5,7 +5,7 @@ from math import ceil
 from bokeh.layouts import column
 from bokeh.plotting import figure, show
 from bokeh.colors import Color, RGB
-from bokeh.io.output import output_file
+from bokeh.io import output
 from bokeh.models import FuncTickFormatter, FixedTicker, ColorBar, LinearColorMapper, Row
 
 try:
@@ -17,16 +17,18 @@ DOT_SIZE = 10
 
 cmap =list(solfa.values()) + bg_colors
 
-def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
+def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None, dir=Path.home()/'Music/solfa_scores',
+               output_file=None):
     """
     Display MIDI track as pianoroll with solfa notes
 
     :param str midi_file: path to MIDI file as string or Path
     :param str track_name: name of track to use
-    :param str key: name of key to use. Automatically determined if not specified.
     :param int start: number of first measure to display
     :param int end: number of last measure to display
-
+    :param str key: name of key to use. Automatically determined if not specified.
+    :param str dir: path of dir in which to store output file
+    :param str output_file: name of output file (Default: <MIDI file name>.html
     """
 
     midi, notes = get_notes(midi_file, track_name)
@@ -45,7 +47,7 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
     stop_tick = ceil(notes[-1].end / ticks_per_measure) * ticks_per_measure
 
 
-    measures_per_staff = min(8, ceil((stop_tick - start_tick) / ticks_per_measure / 4))
+    measures_per_staff = 8
 
     # background color indicators, 12 = white keys, 13 = black keys
     # bg = np.array([(13 if black_key[(x + low - best) % 12] else 12) for x in range(vol_proll.shape[0])])
@@ -124,7 +126,11 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
     figs[0].add_layout(color_bar, 'right')
 
     layout = column(*figs)
-    output_file('/tmp/sogood.html', title=title_text)
+
+    # make output file
+    dir.mkdir(0o755, parents=True, exist_ok=True)
+    outfile = str((dir / Path(output_file or midi_file).name).with_suffix('.html'))
+    output.output_file(outfile, title=outfile)
     show(layout)
 
 if __name__ == '__main__':
