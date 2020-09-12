@@ -5,6 +5,7 @@ from math import ceil
 from bokeh.layouts import column
 from bokeh.plotting import figure, show
 from bokeh.colors import Color, RGB
+from bokeh.colors.named import black
 from bokeh.io import output
 from bokeh.models import FuncTickFormatter, FixedTicker, ColorBar, LinearColorMapper, Row
 
@@ -33,7 +34,6 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None, dir=
     midi, notes = get_notes(midi_file, track_name)
     best = note_2_midi(key) if key else best_ewi_key(notes)
     end_mark = ceil(midi.ticks_per_beat / 128)  # cut note line short by some ticks at both ends to show breaks better
-
 
 
     pitches = {int((x.start + x.end) / 2): x.pitch for x in notes}
@@ -88,12 +88,20 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None, dir=
             f.line([pos, pos], [0, high - low], level='underlay',
                    color='gray', line_width=1, alpha=(0.4 if pos % ticks_per_measure else 0.8))
 
+        prev_pitch = None
         for note in notes:
             if staff_start <= note.end and note.start <= staff_end:
                 tick_labels[int((note.start + note.end) / 2)] = midi_to_solfa(note.pitch, best)
-                f.line([max(note.start + end_mark, staff_start), min(note.end - end_mark, staff_end)],
-                       [note.pitch - low, note.pitch - low],
+                draw_start = max(note.start, staff_start)
+                draw_end = min(note.end, staff_end)
+                f.line([draw_start, draw_end], [note.pitch - low, note.pitch - low],
                        line_width=10, color=list(solfa.values())[(note.pitch - best) % 12], alpha=1.0)
+                if note.pitch == prev_pitch:  # make note breaks obvious
+                    f.line([draw_start - end_mark, draw_start + end_mark], [note.pitch - low, note.pitch - low],
+                           line_width=10, color=black, alpha=1.0)
+                prev_pitch = note.pitch
+
+
 
         tick_formatter = FuncTickFormatter(code="""
             var labels = %s;
