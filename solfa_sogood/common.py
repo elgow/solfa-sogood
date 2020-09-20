@@ -3,6 +3,7 @@
 from collections import OrderedDict
 from pathlib import Path
 from miditoolkit.midi import parser as mid_parser
+from itertools import chain
 
 
 CHROMATIC_SCALE = ('C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B')
@@ -131,17 +132,18 @@ def get_notes(midi_file, track_name='MELODY'):
     """
     midi_path = Path(midi_file)
     midi_song = mid_parser.MidiFile(str(midi_path))
-    track_index = None
+
+    notes = None
     if len(midi_song.instruments) == 1:
-        track_index = 0
+        # if only one track then just take it whatever the name
+        notes = midi_song.instruments[0].notes
     else:
-        track_map = {str(name).strip().upper(): num for num, name in enumerate([t.name for t in midi_song.instruments])}
-        track_index = track_map.get(str(track_name).strip().upper())
-    if track_index is None:
-        raise ValueError(f'No track {track_name} found in tracks {track_map}')
-    notes = midi_song.instruments[track_index].notes
+        def canonical(name):
+            return str(name).strip().casefold()
+        # combine instruments with desired track name to rebuild the original complete track
+        notes = list(chain(*[i.notes for i in midi_song.instruments if canonical(i.name) == canonical(track_name)]))
     if not notes:
-        raise ValueError(f'No notes in track {midi_song.instruments[track_index]}')
+        raise ValueError(f'No track {track_name} found in tracks {{i.name for i in midi_song.instruments}}')
     return midi_song, notes
 
 
