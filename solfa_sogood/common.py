@@ -4,6 +4,7 @@ from collections import OrderedDict
 from pathlib import Path
 from miditoolkit.midi import parser as mid_parser
 from itertools import chain
+from types import SimpleNamespace
 
 
 CHROMATIC_SCALE = ('C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B')
@@ -15,31 +16,47 @@ MAJOR_RANGE = (0, 2, 4, 5, 7, 9, 11)   # Offsets from tonic for major scale, wra
 EWI_RANGE = (-2, -1) + MAJOR_RANGE + (10, 12, 14, 15)  # range of notes EWI can play w/o octave shift. Bb is easy
 
 # solfa scale note names
-# solfa = OrderedDict((('Do', '#c40233'),   # red
-#                      ('di', '#fd4e7a'),   # pastel red
-#                      ('Re', '#e16b1a'),   # orange
-#                      ('ri', '#efa676'),   # pastel orange
-#                      ('Mi', '#eac100'),   # yellow
-#                      ('Fa', '#00a368'),   # green
-#                      ('fi', '#00e691'),   # pastel green
-#                      ('So', '#00e6e2'),   # aqua
-#                      ('si', '#4dfffc'),   # pastel aqua
-#                      ('La', '#0088bf'),   # blue
-#                      ('li', '#80dbff'),   # pastel blue
-#                      ('Ti', '#624579')))  # purple
+# solfa = OrderedDict((('Do', '#e31a1c'),   # red
+#                      ('di', '#fb9a99'),   # pastel red
+#                      ('Re', '#ff7f00'),   # orange
+#                      ('ri', '#fdbf6f'),   # pastel orange
+#                      ('Mi', '#F0E442'),   # yellow
+#                      ('Fa', '#666633'),   # green
+#                      ('fi', '#bbbb77'),   # pastel green
+#                      ('So', '#248f24'),   # aqua
+#                      ('si', '#70db70'),   # pastel aqua
+#                      ('La', '#6baed6'),   # blue
+#                      ('li', '#bfd3e6'),   # pastel blue
+#                      ('Ti', '#6a3d9a')))  # purple
 
-solfa = OrderedDict((('Do', '#e31a1c'),   # red
-                     ('di', '#fb9a99'),   # pastel red
-                     ('Re', '#ff7f00'),   # orange
-                     ('ri', '#fdbf6f'),   # pastel orange
-                     ('Mi', '#F0E442'),   # yellow
-                     ('Fa', '#4dac26'),   # green
-                     ('fi', '#b5cf6b'),   # pastel green
-                     ('So', '#5ab4ac'),   # aqua
-                     ('si', '#c7eae5'),   # pastel aqua
-                     ('La', '#6baed6'),   # blue
-                     ('li', '#bfd3e6'),   # pastel blue
-                     ('Ti', '#6a3d9a')))  # purple
+iro = SimpleNamespace(brown='#734d26',
+                      light_brown='#d9b38c',
+                      red='#e31a1c',
+                      light_red='#fb9a99',
+                      orange='#ff7f00',
+                      light_orange='#fdbf6f',
+                      yellow='#ffeb00',
+                      light_yellow='#ebf55e',
+                      green='#248f24',
+                      light_green='#70db70',
+                      aqua='#248f24',
+                      light_aqua='#70db70',
+                      blue='#6baed6',
+                      light_blue='#bfd3e6',
+                      purple='#6a3d9a')
+
+solfa = OrderedDict((('Do', iro.brown),
+                     ('di', iro.light_brown),
+                     ('Re', iro.red),
+                     ('ri', iro.light_red),
+                     ('Mi', iro.orange),
+                     ('Fa', iro.yellow),
+                     ('fi', iro.light_yellow),
+                     ('So', iro.green),
+                     ('si', iro.light_green),
+                     ('La', iro.blue),
+                     ('li', iro.light_blue),
+                     ('Ti', iro.purple)))
 
 solfa_list = list(solfa.items())
 
