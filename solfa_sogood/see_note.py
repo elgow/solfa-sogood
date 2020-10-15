@@ -1,9 +1,13 @@
 import tkinter as tk
 from tkinter import font
 import rtmidi
+import mido
 import defopt
 
-from common import *
+try:
+    from common import *
+except ImportError:
+    from .common import *
 
 
 def main(key_root='C-4'):  # EWI-USB  MidiKeys
@@ -16,23 +20,26 @@ def main(key_root='C-4'):  # EWI-USB  MidiKeys
     LEARN_TEXT = 'Learn Key Root'
     SET_TEXT = 'Set Key Root'
 
+    SHOW_INTERVAL = 30
+
     root_pitch = current_note = note_2_midi(key_root)
+    prev_note = None
     learn_mode = True
 
-    def do_midi(msg, client_data):
+    def do_midi(msg_data, client_data):
         nonlocal current_note, solfa_label
-        #msg = midi_in.getMessage()
-        if msg:
-            if msg.isNoteOn() and msg.getVelocity() > 0:
-                current_note = msg.getNoteNumber()
-            elif msg.isNoteOff() and not learn_mode:
-                if msg.getNoteNumber() == current_note:
+        if msg_data:
+            msg = mido.parse(msg_data[0])
+            if msg.type == MSG.note_on and msg.velocity > 0:
+                current_note = msg.note
+            elif not learn_mode and (msg.type == MSG.note_off or (msg.type == MSG.note_on and msg.velocity == 0)):
+                if msg.note == current_note:
                     current_note = None
 
-
-    midi_in = rtmidi.RtMidiIn()
-    midi_in.setCallback(do_midi)
-    midi_in.openPort(0)
+    midi_in = rtmidi.MidiIn()
+    midi_in.set_callback(do_midi)
+        #setCallback(do_midi)
+    midi_in.open_port(0) #openPort(0)
     root = tk.Tk()
     root.title('See-Note')
 
@@ -66,17 +73,19 @@ def main(key_root='C-4'):  # EWI-USB  MidiKeys
     tk.Button(root, text='Quit', command=close).pack(side=tk.RIGHT)
 
     def show():
-        active = current_note is not None
-        solfa_text = midi_to_solfa(current_note, root_pitch) if active else ''
-        note_text = '{0}-{1}'.format(*midi_2_note(current_note)) if active else ''
-        solfa_label.config(text=solfa_text, fg=solfa_list[(current_note - root_pitch) % 12][1])
-        note_label.config(text=note_text)
-            
-        #print(msg)
-        root.after(2, show)  # reschedule event
+        nonlocal prev_note
+        if current_note != prev_note:
+            active = current_note is not None
+            solfa_text = midi_to_solfa(current_note, root_pitch) if active else ''
+            text_color = solfa_list[(current_note - root_pitch) % 12][1] if active else 'black'
+            note_text = '{0}-{1}'.format(*midi_2_note(current_note)) if active else ''
+            solfa_label.config(text=solfa_text, fg=text_color)
+            note_label.config(text=note_text)
+            prev_note = current_note
+        root.after(SHOW_INTERVAL, show)  # reschedule event
 
     set_root()
-    root.after(10, show)
+    root.after(SHOW_INTERVAL, show)
 
     root.mainloop()
 
