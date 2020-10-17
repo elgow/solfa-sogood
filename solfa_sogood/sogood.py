@@ -98,7 +98,7 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None, dir=
                        line_width=10, color=list(solfa.values())[(note.pitch - best) % 12], alpha=1.0)
                 if note.pitch == prev_pitch:  # make note breaks obvious
                     f.line([draw_start - end_mark, draw_start + end_mark], [note.pitch - low, note.pitch - low],
-                           line_width=10, color=black, alpha=1.0)
+                           line_width=10, color=end_mark_color, alpha=1.0)
                 prev_pitch = note.pitch
 
 

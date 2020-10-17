@@ -5,6 +5,7 @@ from pathlib import Path
 from miditoolkit.midi import parser as mid_parser
 from itertools import chain
 from types import SimpleNamespace
+from mido.messages.strings import SPEC_BY_TYPE
 
 
 CHROMATIC_SCALE = ('C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B')
@@ -14,6 +15,8 @@ NOTE_NAME_MAP = {**{x: x for x in CHROMATIC_SCALE},
 MAJOR_INTERVALS = (2, 2, 1, 2, 2, 2, 1)
 MAJOR_RANGE = (0, 2, 4, 5, 7, 9, 11)   # Offsets from tonic for major scale, wraps mod 8 and adds 12 at wrap
 EWI_RANGE = (-2, -1) + MAJOR_RANGE + (10, 12, 14, 15)  # range of notes EWI can play w/o octave shift. Bb is easy
+
+MSG = SimpleNamespace(**{k: k for k in SPEC_BY_TYPE.keys()})
 
 # solfa scale note names
 # solfa = OrderedDict((('Do', '#e31a1c'),   # red
@@ -38,25 +41,29 @@ iro = SimpleNamespace(brown='#734d26',
                       yellow='#ffeb00',
                       light_yellow='#ebf55e',
                       green='#248f24',
-                      light_green='#70db70',
+                      light_green='#79ed79',
                       aqua='#248f24',
                       light_aqua='#70db70',
-                      blue='#6baed6',
-                      light_blue='#bfd3e6',
-                      purple='#6a3d9a')
+                      blue='#1100e6',
+                      light_blue='#25acfa',
+                      purple='#832aeb',
+                      light_purple='#ac8dfa',
+                      violet='#e228f9')
 
 solfa = OrderedDict((('Do', iro.brown),
                      ('di', iro.light_brown),
                      ('Re', iro.red),
                      ('ri', iro.light_red),
-                     ('Mi', iro.orange),
-                     ('Fa', iro.yellow),
-                     ('fi', iro.light_yellow),
-                     ('So', iro.green),
-                     ('si', iro.light_green),
-                     ('La', iro.blue),
-                     ('li', iro.light_blue),
-                     ('Ti', iro.purple)))
+                     ('Mi', iro.yellow),
+                     ('Fa', iro.green),
+                     ('fi', iro.light_green),
+                     ('So', iro.blue),
+                     ('si', iro.light_blue),
+                     ('La', iro.purple),
+                     ('li', iro.light_purple),
+                     ('Ti', iro.violet)))
+
+end_mark_color = iro.orange
 
 solfa_list = list(solfa.items())
 
