@@ -4,11 +4,10 @@ from math import ceil
 
 from bokeh.layouts import column
 from bokeh.plotting import figure, show
-from bokeh.colors import Color, RGB
-from bokeh.colors.named import black
 from bokeh.io import output
-from bokeh.models import FuncTickFormatter, FixedTicker, ColorBar, LinearColorMapper, Row
+from bokeh.models import FuncTickFormatter, FixedTicker, ColorBar, LinearColorMapper
 
+# trick for use as main or via import
 try:
     from common import *
 except:
@@ -46,16 +45,7 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None, dir=
     stop_tick = ceil(notes[-1].end / ticks_per_measure) * ticks_per_measure
 
 
-    measures_per_staff = 8
-
-    # background color indicators, 12 = white keys, 13 = black keys
-    # bg = np.array([(13 if black_key[(x + low - best) % 12] else 12) for x in range(vol_proll.shape[0])])
-    # fg = np.array([[(x + low - best) % 12] for x in range(vol_proll.shape[0])])
-
-    # init array with black and white key bg vals
-    # proll = np.zeros(vol_proll.shape)
-    # for r in range(vol_proll.shape[0]):
-    #     proll[r] = np.where(vol_proll[r] > 0, fg[r], 13 if black_key[(r + low - best) % 12] else 12)
+    measures_per_staff = 8  # Arbitrary choice for readability
 
     # set up staffs
     play_start = start_tick + start * ticks_per_measure
@@ -66,7 +56,6 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None, dir=
 
     staff_ticks = measures_per_staff * ticks_per_measure
 
-    nan = float('nan')
     figs = []
 
     for staff_num in range(num_staffs):

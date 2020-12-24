@@ -14,25 +14,12 @@ NOTE_NAME_MAP = {**{x: x for x in CHROMATIC_SCALE},
 
 MAJOR_INTERVALS = (2, 2, 1, 2, 2, 2, 1)
 MAJOR_RANGE = (0, 2, 4, 5, 7, 9, 11)   # Offsets from tonic for major scale, wraps mod 8 and adds 12 at wrap
-EWI_RANGE = (-2, -1) + MAJOR_RANGE + (10, 12, 14, 15)  # range of notes EWI can play w/o octave shift. Bb is easy
+EWI_RANGE = (-2, -1) + MAJOR_RANGE + (10, 12, 14, 15)  # range of notes EWI can play w/o octave shift.
 
 MSG = SimpleNamespace(**{k: k for k in SPEC_BY_TYPE.keys()})
 
-# solfa scale note names
-# solfa = OrderedDict((('Do', '#e31a1c'),   # red
-#                      ('di', '#fb9a99'),   # pastel red
-#                      ('Re', '#ff7f00'),   # orange
-#                      ('ri', '#fdbf6f'),   # pastel orange
-#                      ('Mi', '#F0E442'),   # yellow
-#                      ('Fa', '#666633'),   # green
-#                      ('fi', '#bbbb77'),   # pastel green
-#                      ('So', '#248f24'),   # aqua
-#                      ('si', '#70db70'),   # pastel aqua
-#                      ('La', '#6baed6'),   # blue
-#                      ('li', '#bfd3e6'),   # pastel blue
-#                      ('Ti', '#6a3d9a')))  # purple
-
-iro = SimpleNamespace(brown='#734d26',
+# distinguishable colors
+hue = SimpleNamespace(brown='#734d26',
                       light_brown='#d9b38c',
                       red='#e31a1c',
                       light_red='#fb9a99',
@@ -52,28 +39,29 @@ iro = SimpleNamespace(brown='#734d26',
                       light_purple='#ac8dfa',
                       violet='#e228f9')
 
-solfa = OrderedDict((('Do', iro.brown),
-                     ('di', iro.light_brown),
-                     ('Re', iro.red),
-                     ('ri', iro.light_red),
-                     ('Mi', iro.yellow),
-                     ('Fa', iro.olive),
-                     ('fi', iro.light_olive),
-                     ('So', iro.green),
-                     ('si', iro.light_green),
-                     ('La', iro.blue),
-                     ('li', iro.light_blue),
-                     ('Ti', iro.light_purple)))
+# solfa scale notes, see https://en.wikipedia.org/wiki/File:Solresol_representations.svg
+# major scale notes are dark, chromatic accidentals are light
+solfa = OrderedDict((('Do', hue.brown),
+                     ('di', hue.light_brown),
+                     ('Re', hue.red),
+                     ('ri', hue.light_red),
+                     ('Mi', hue.yellow),
+                     ('Fa', hue.olive),
+                     ('fi', hue.light_olive),
+                     ('So', hue.green),
+                     ('si', hue.light_green),
+                     ('La', hue.blue),
+                     ('li', hue.light_blue),
+                     ('Ti', hue.light_purple)))
 
-end_mark_color = iro.orange
+end_mark_color = hue.orange
 
 solfa_list = list(solfa.items())
 
 black_key = [(1 if x == x.lower() else 0) for x in solfa.keys()]
 
-# color coded solfa mostly per https://en.wikipedia.org/wiki/File:Solresol_representations.svg
-bg_colors = ['#f2f2f2',  # light gray diatonic note row background
-             '#e6e6e6']  # gray chromatic accidentals row background
+bg_colors = ['#f2f2f2',  # light gray major scale notes row background
+             '#e6e6e6']  # gray chromatic accidental notes row background
 
 def midi_2_note(pitch: int):
     """
@@ -125,11 +113,12 @@ def best_ewi_key(notes: {int}):
     :return: MIDI pitch for tonic of key
     """
 
-    pitches = [x.pitch for x in notes]
+    pitches = sorted(list([x.pitch for x in notes]))
     pitchset = set(pitches)
     scores = {}
-    for pitch in range(min(pitches), sorted(list(pitches))[len(pitches)//2]):
+    for pitch in range(pitches[0], pitches[len(pitches)//2]):
         ewi_scale = set(ewi_range(pitch))
+        # note weighting to choose key
         score = ((3.0 * len(ewi_scale & pitchset)
                  + len([n for n in pitchset if min(ewi_scale) <= n <= max(ewi_scale)])) / len(pitchset)
                  + 3.0 * len([x for x in pitches if x in ewi_scale]) / len(pitches))
