@@ -71,7 +71,6 @@ def main(key_root='C-4'):  # EWI-USB  MidiKeys
                 if msg.getNoteNumber() == current_note:
                     show(False)
 
-        #print(msg)
         root.after(2, do_midi)  # reschedule event
 
     set_root()
