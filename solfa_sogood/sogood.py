@@ -59,12 +59,6 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
 
     proll = np.where(np.where(vol_proll > 0, True, False), fg[:, None], bg[:, None])
 
-    # for i in range(proll.shape[0]):
-    #     def f(x):
-    #         return i % 2 + 12 if x == 0 else ((i + low - best) % 12)  # white/gray for bg else solfa num val
-    #     proll[i] = np.array([f(xi) for xi in proll[i]])
-    # proll = proll[low - 2:high + 2, :]
-
     num_staffs = ceil((play_stop - play_start) / (ticks_per_measure * MEASURES_PER_STAFF))
     fig, axs = plt.subplots(nrows=num_staffs, figsize=(MEASURES_PER_STAFF, 1.5 * num_staffs), dpi=300)
 
@@ -72,19 +66,7 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
 
     y_repeat = 1
 
-    # ax.set_ylim([low, high])
-    # ax.set_ylim([y_repeat * (low), y_repeat * (high)])
-
     for idx, ax in enumerate(axs):
-        #ax.set_yticks(range(low, high))
-        #ax.yaxis.set_major_locator()
-        #yticks = plt.yticks()
-        #tick_dic = dict(zip_longest(list(yticks[0]), yticks[1]))
-
-        # for p, l in tick_dic.items():
-        #     text, color = list(solfa.items())[int((p - best) % 12)]
-        #     l.set_color(color)
-
         def y_tick_label(i, pos):
             return midi_to_solfa(i + low, best)
 
@@ -103,20 +85,12 @@ def show_score(midi_file, track_name='MELODY', *, start=0, end=0, key=None):
         ax.xaxis.grid(linestyle='-', linewidth=2, which='major')
         ax.xaxis.grid(color='#e6e6e6', linestyle=':', linewidth=1, which='minor')
 
-
-
-        #tonic = mpatches.Patch(color=solfa['Do'], label='Do = {}-{}'.format(*midi_2_note(best)))
-        #plt.legend(handles=[tonic])
-
         ax.imshow(np.repeat(proll[:, :], y_repeat, axis=0),
                 cmap=cmap,
                 aspect="auto",
                 origin="lower",
                 interpolation="none")
 
-    #fig.show()
-    #plt.ion()
-    #plt.show()
     from matplotlib.backends.backend_pdf import PdfPages
     with PdfPages('/Volumes/Users/Home/Ed/test.pdf') as export_pdf:
         export_pdf.savefig(dpi=300)
