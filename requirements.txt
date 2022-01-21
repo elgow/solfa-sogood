@@ -5,7 +5,7 @@ decorator==4.4.2
 defopt==6.0
 docutils==0.16
 ipdb==0.13.3
-ipython==7.16.1
+ipython==7.16.3
 ipython-genutils==0.2.0
 jedi==0.17.2
 kiwisolver==1.2.0
