@@ -13,7 +13,7 @@ matplotlib==3.3.0
 miditoolkit==0.1.14
 mido==1.2.9
 mingus==0.6.0
-numpy==1.19.1
+numpy==1.22.0
 parso==0.7.0
 pexpect==4.8.0
 pickleshare==0.7.5
